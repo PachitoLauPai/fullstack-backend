@@ -21,7 +21,7 @@ public interface VisitaInopinadaEntityRepository extends JpaRepository<VisitaIno
     @Query("SELECT COUNT(DISTINCT v.docente.id) FROM VisitaInopinadaEntity v WHERE v.usuarioAuditor.id = :auditorId")
     long countDocentesEvaluadosByAuditor(@Param("auditorId") Integer auditorId);
     
-    @Query("SELECT v FROM VisitaInopinadaEntity v WHERE v.usuarioAuditor.id = :auditorId ORDER BY v.fechaVisita DESC")
+    @Query("SELECT v FROM VisitaInopinadaEntity v WHERE v.usuarioAuditor.id = :auditorId ORDER BY v.id DESC")
     List<VisitaInopinadaEntity> findRecentVisitasByAuditor(@Param("auditorId") Integer auditorId);
     
     @Query("SELECT v FROM VisitaInopinadaEntity v WHERE v.usuarioAuditor.id = :auditorId AND v.fechaVisita >= :fecha ORDER BY v.fechaVisita ASC")
@@ -31,13 +31,15 @@ public interface VisitaInopinadaEntityRepository extends JpaRepository<VisitaIno
     @Query("SELECT v FROM VisitaInopinadaEntity v WHERE " +
            "(:busqueda IS NULL OR LOWER(v.docente.nombres) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR LOWER(v.docente.apellidos) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
+           "  OR LOWER(CONCAT(v.docente.nombres, ' ', v.docente.apellidos)) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
+           "  OR LOWER(CONCAT(v.docente.apellidos, ' ', v.docente.nombres)) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR LOWER(v.asignatura.nombre) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR CAST(v.id AS string) LIKE CONCAT('%', :busqueda, '%')) " +
            "AND (:idSede IS NULL OR v.sede.id = :idSede) " +
            "AND (:estado IS NULL OR v.estadoVisita = :estado) " +
            "AND (:fechaDesde IS NULL OR v.fechaVisita >= :fechaDesde) " +
            "AND (:fechaHasta IS NULL OR v.fechaVisita <= :fechaHasta) " +
-           "ORDER BY v.fechaVisita DESC")
+           "ORDER BY v.id DESC")
     List<VisitaInopinadaEntity> filtrarVisitas(
         @Param("busqueda") String busqueda,
         @Param("idSede") Integer idSede,
@@ -50,13 +52,15 @@ public interface VisitaInopinadaEntityRepository extends JpaRepository<VisitaIno
            "v.usuarioAuditor.id = :auditorId " +
            "AND (:busqueda IS NULL OR LOWER(v.docente.nombres) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR LOWER(v.docente.apellidos) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
+           "  OR LOWER(CONCAT(v.docente.nombres, ' ', v.docente.apellidos)) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
+           "  OR LOWER(CONCAT(v.docente.apellidos, ' ', v.docente.nombres)) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR LOWER(v.asignatura.nombre) LIKE LOWER(CONCAT('%', :busqueda, '%')) " +
            "  OR CAST(v.id AS string) LIKE CONCAT('%', :busqueda, '%')) " +
            "AND (:idSede IS NULL OR v.sede.id = :idSede) " +
            "AND (:estado IS NULL OR v.estadoVisita = :estado) " +
            "AND (:fechaDesde IS NULL OR v.fechaVisita >= :fechaDesde) " +
            "AND (:fechaHasta IS NULL OR v.fechaVisita <= :fechaHasta) " +
-           "ORDER BY v.fechaVisita DESC")
+           "ORDER BY v.id DESC")
     List<VisitaInopinadaEntity> filtrarVisitasPorAuditor(
         @Param("auditorId") Integer auditorId,
         @Param("busqueda") String busqueda,
@@ -74,7 +78,7 @@ public interface VisitaInopinadaEntityRepository extends JpaRepository<VisitaIno
            "AND (:estado IS NULL OR v.estadoVisita = :estado) " +
            "AND (:fechaDesde IS NULL OR v.fechaVisita >= :fechaDesde) " +
            "AND (:fechaHasta IS NULL OR v.fechaVisita <= :fechaHasta) " +
-           "ORDER BY v.fechaVisita DESC")
+           "ORDER BY v.id DESC")
     List<VisitaInopinadaEntity> filtrarVisitasPorDocente(
         @Param("docenteId") Integer docenteId,
         @Param("busqueda") String busqueda,
