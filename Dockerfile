@@ -1,5 +1,5 @@
 # --- Etapa 1: Compilación del proyecto ---
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copiar el archivo de configuración de Maven y el código fuente
@@ -10,7 +10,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # --- Etapa 2: Imagen final ligera para ejecución ---
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Copiar el archivo .jar generado desde la etapa de compilación
