@@ -76,18 +76,73 @@ public class PdfService {
             PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
 
             // ═══════════════════════════════════════════════
-            // 1. ENCABEZADO INSTITUCIONAL (3 líneas + título)
+            // 1. ENCABEZADO INSTITUCIONAL con logo a la izquierda
             // ═══════════════════════════════════════════════
-            addCenteredParagraph(document, "UNIVERSIDAD PRIVADA DEL NORTE", boldFont, 8);
-            addCenteredParagraph(document, "VICERRECTORADO ACADÉMICO", boldFont, 8);
-            addCenteredParagraph(document, "FACULTAD DE INGENIERÍAS  ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS", boldFont, 7.5f);
+            Table headerTable = new Table(UnitValue.createPercentArray(new float[]{18, 64, 18}))
+                    .setWidth(UnitValue.createPercentValue(100))
+                    .setMarginBottom(1);
 
-            Paragraph title = new Paragraph("VISITA INOPINADA – CLASES PRESENCIALES")
+            // Columna izquierda: logo UTP
+            Cell logoCell = new Cell()
+                    .setBorder(Border.NO_BORDER)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                    .setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+            try {
+                java.io.InputStream logoStream = getClass().getClassLoader().getResourceAsStream("logo_utp.png");
+                if (logoStream == null) {
+                    // intentar con iconoutp.jpg si no existe el PNG
+                    logoStream = getClass().getClassLoader().getResourceAsStream("iconoutp.jpg");
+                }
+                if (logoStream != null) {
+                    byte[] logoBytes = logoStream.readAllBytes();
+                    Image logoImg = new Image(ImageDataFactory.create(logoBytes))
+                            .setHeight(45)
+                            .setAutoScaleWidth(true)
+                            .setHorizontalAlignment(HorizontalAlignment.CENTER);
+                    logoCell.add(logoImg);
+                } else {
+                    // Placeholder si no se encuentra la imagen
+                    logoCell.add(new Paragraph("UTP").setFont(boldFont).setFontSize(10)
+                            .setTextAlignment(TextAlignment.CENTER));
+                }
+            } catch (Exception imgEx) {
+                System.out.println("WARN - No se pudo cargar el logo: " + imgEx.getMessage());
+                logoCell.add(new Paragraph("UTP").setFont(boldFont).setFontSize(10)
+                        .setTextAlignment(TextAlignment.CENTER));
+            }
+            headerTable.addCell(logoCell);
+
+            // Columna central: texto institucional centrado en la página
+            Cell textCell = new Cell()
+                    .setBorder(Border.NO_BORDER)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE);
+            textCell.add(new Paragraph("UNIVERSIDAD PRIVADA DEL NORTE")
+                    .setFont(boldFont).setFontSize(8)
+                    .setTextAlignment(TextAlignment.CENTER).setMarginBottom(1));
+            textCell.add(new Paragraph("VICERRECTORADO ACADÉMICO")
+                    .setFont(boldFont).setFontSize(8)
+                    .setTextAlignment(TextAlignment.CENTER).setMarginBottom(1));
+            textCell.add(new Paragraph("FACULTAD DE INGENIERÍAS  ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS")
+                    .setFont(boldFont).setFontSize(7.5f)
+                    .setTextAlignment(TextAlignment.CENTER));
+            headerTable.addCell(textCell);
+
+            // Columna derecha vacía: balancea la anchura del logo para centrar el texto
+            headerTable.addCell(new Cell().setBorder(Border.NO_BORDER));
+
+            // Fila 2: título centrado en TODA la anchura (colspan 3)
+            Cell titleCell = new Cell(1, 3)
+                    .setBorder(Border.NO_BORDER)
+                    .setTextAlignment(TextAlignment.CENTER);
+            titleCell.add(new Paragraph("VISITA INOPINADA – CLASES PRESENCIALES")
                     .setFont(boldFont).setFontSize(10)
                     .setTextAlignment(TextAlignment.CENTER)
                     .setUnderline(0.5f, -2f)
-                    .setMarginTop(1).setMarginBottom(0);
-            document.add(title);
+                    .setMarginTop(1).setMarginBottom(0));
+            headerTable.addCell(titleCell);
+
+            document.add(headerTable);
 
             // ═══════════════════════════════════════════════
             // 2. TABLA DATOS GENERALES
