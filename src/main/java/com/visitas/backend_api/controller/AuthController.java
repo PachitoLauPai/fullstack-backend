@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,10 +34,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
-        System.out.println("ERROR DETALLADO: " + ex.getMessage());
+    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class, AuthenticationException.class})
+    public ResponseEntity<Map<String, String>> handleBadCredentials(Exception ex) {
+        System.out.println("ERROR DE AUTENTICACION: " + ex.getMessage());
         ex.printStackTrace();
         Map<String, String> response = new HashMap<>();
         response.put("error", "Credenciales incorrectas");
