@@ -7,13 +7,11 @@ import com.visitas.backend_api.dto.VisitaProgramarDTO;
 import com.visitas.backend_api.dto.VisitaResponseDTO;
 import com.visitas.backend_api.entity.AsignaturaEntity;
 import com.visitas.backend_api.entity.RequerimientoVisitaEntity;
-import com.visitas.backend_api.entity.DocenteEntity;
 import com.visitas.backend_api.entity.EvaluacionAsistenciaEstudiantesEntity;
 import com.visitas.backend_api.entity.EvaluacionAvanceSilabicoEntity;
 import com.visitas.backend_api.entity.EvaluacionControlDocenteEntity;
 import com.visitas.backend_api.entity.EvaluacionGuiaPracticaEntity;
 import com.visitas.backend_api.entity.EvaluacionMaterialVirtualEntity;
-import com.visitas.backend_api.entity.ResponsableVisitaEntity;
 import com.visitas.backend_api.entity.SedeEntity;
 import com.visitas.backend_api.entity.UsuarioSistemaEntity;
 import com.visitas.backend_api.entity.VisitaInopinadaEntity;
@@ -27,14 +25,12 @@ import com.visitas.backend_api.exception.ResourceNotFoundException;
 import com.visitas.backend_api.exception.UnauthorizedAccessException;
 import com.visitas.backend_api.mapper.VisitaMapper;
 import com.visitas.backend_api.repository.AsignaturaEntityRepository;
-import com.visitas.backend_api.repository.DocenteEntityRepository;
 import com.visitas.backend_api.repository.EvaluacionAsistenciaEstudiantesEntityRepository;
 import com.visitas.backend_api.repository.EvaluacionAvanceSilabicoEntityRepository;
 import com.visitas.backend_api.repository.EvaluacionControlDocenteEntityRepository;
 import com.visitas.backend_api.repository.EvaluacionGuiaPracticaEntityRepository;
 import com.visitas.backend_api.repository.EvaluacionMaterialVirtualEntityRepository;
 import com.visitas.backend_api.repository.RequerimientoVisitaEntityRepository;
-import com.visitas.backend_api.repository.ResponsableVisitaEntityRepository;
 import com.visitas.backend_api.repository.SedeEntityRepository;
 import com.visitas.backend_api.repository.UsuarioSistemaEntityRepository;
 import com.visitas.backend_api.repository.VisitaInopinadaEntityRepository;
@@ -56,9 +52,7 @@ public class VisitaService {
 
     private final VisitaInopinadaEntityRepository visitaRepository;
     private final SedeEntityRepository sedeRepository;
-    private final DocenteEntityRepository docenteRepository;
     private final AsignaturaEntityRepository asignaturaRepository;
-    private final ResponsableVisitaEntityRepository responsableRepository;
     private final UsuarioSistemaEntityRepository usuarioRepository;
     private final EvaluacionControlDocenteEntityRepository evaluacionControlDocenteRepository;
     private final EvaluacionMaterialVirtualEntityRepository evaluacionMaterialVirtualRepository;
@@ -78,11 +72,13 @@ public class VisitaService {
 
         SedeEntity sede = sedeRepository.findById(dto.getIdSede())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede", dto.getIdSede()));
-        DocenteEntity docente = docenteRepository.findById(dto.getIdDocente())
+        UsuarioSistemaEntity docente = usuarioRepository.findById(dto.getIdDocente())
+                .filter(u -> u.getRol() != null && u.getRol().getNombreRol() == Rol.DOCENTE)
                 .orElseThrow(() -> new ResourceNotFoundException("Docente", dto.getIdDocente()));
         AsignaturaEntity asignatura = asignaturaRepository.findById(dto.getIdAsignatura())
                 .orElseThrow(() -> new ResourceNotFoundException("Asignatura", dto.getIdAsignatura()));
-        ResponsableVisitaEntity responsable = responsableRepository.findById(dto.getIdResponsable())
+        UsuarioSistemaEntity responsable = usuarioRepository.findById(dto.getIdResponsable())
+                .filter(u -> u.getRol() != null && u.getRol().getNombreRol() == Rol.AUDITOR)
                 .orElseThrow(() -> new ResourceNotFoundException("Responsable", dto.getIdResponsable()));
         UsuarioSistemaEntity usuarioAuditor = usuarioRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", currentUserId));
@@ -542,7 +538,8 @@ public class VisitaService {
         // Validaciones
         SedeEntity sede = sedeRepository.findById(dto.getIdSede())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede", dto.getIdSede()));
-        DocenteEntity docente = docenteRepository.findById(dto.getIdDocente())
+        UsuarioSistemaEntity docente = usuarioRepository.findById(dto.getIdDocente())
+                .filter(u -> u.getRol() != null && u.getRol().getNombreRol() == Rol.DOCENTE)
                 .orElseThrow(() -> new ResourceNotFoundException("Docente", dto.getIdDocente()));
         AsignaturaEntity asignatura = asignaturaRepository.findById(dto.getIdAsignatura())
                 .orElseThrow(() -> new ResourceNotFoundException("Asignatura", dto.getIdAsignatura()));
@@ -555,7 +552,8 @@ public class VisitaService {
         }
         
         // Obtener responsable (por defecto el primero)
-        ResponsableVisitaEntity responsable = responsableRepository.findAll().stream()
+        UsuarioSistemaEntity responsable = usuarioRepository.findAll().stream()
+                .filter(u -> u.getRol() != null && u.getRol().getNombreRol() == Rol.AUDITOR)
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("No hay responsables disponibles", 0));
         

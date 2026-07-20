@@ -1,13 +1,9 @@
 package com.visitas.backend_api.service;
 
 import com.visitas.backend_api.dto.UsuarioDTO;
-import com.visitas.backend_api.entity.DocenteEntity;
-import com.visitas.backend_api.entity.ResponsableVisitaEntity;
 import com.visitas.backend_api.entity.RolEntity;
 import com.visitas.backend_api.entity.UsuarioSistemaEntity;
 import com.visitas.backend_api.exception.ResourceNotFoundException;
-import com.visitas.backend_api.repository.DocenteEntityRepository;
-import com.visitas.backend_api.repository.ResponsableVisitaEntityRepository;
 import com.visitas.backend_api.repository.RolEntityRepository;
 import com.visitas.backend_api.repository.UsuarioSistemaEntityRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +20,6 @@ public class UsuarioService {
 
     private final UsuarioSistemaEntityRepository usuarioRepository;
     private final RolEntityRepository rolRepository;
-    private final DocenteEntityRepository docenteRepository;
-    private final ResponsableVisitaEntityRepository responsableRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
@@ -60,6 +54,22 @@ public class UsuarioService {
 
     @Transactional
     public UsuarioDTO crear(UsuarioDTO dto) {
+        if (dto.getDni() != null && !dto.getDni().isBlank()) {
+            String cleanDni = dto.getDni().trim();
+            if (!cleanDni.matches("\\d{8}")) {
+                throw new IllegalArgumentException("El DNI debe tener exactamente 8 dígitos numéricos");
+            }
+            if (usuarioRepository.findByDni(cleanDni).isPresent()) {
+                throw new IllegalArgumentException("El DNI ya está registrado");
+            }
+        }
+
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
+                throw new IllegalArgumentException("El correo electrónico ya está registrado");
+            }
+        }
+
         RolEntity rol = rolRepository.findById(dto.getIdRol())
                 .orElseThrow(() -> new ResourceNotFoundException("Rol", dto.getIdRol()));
 
@@ -73,19 +83,9 @@ public class UsuarioService {
         usuario.setNombres(dto.getNombres());
         usuario.setApellidos(dto.getApellidos());
         usuario.setRol(rol);
+        usuario.setDni(dto.getDni());
+        usuario.setCargo(dto.getCargo());
         usuario.setEstado(true);
-
-        if (dto.getIdDocente() != null) {
-            DocenteEntity docente = docenteRepository.findById(dto.getIdDocente())
-                    .orElseThrow(() -> new ResourceNotFoundException("Docente", dto.getIdDocente()));
-            usuario.setDocente(docente);
-        }
-
-        if (dto.getIdResponsable() != null) {
-            ResponsableVisitaEntity responsable = responsableRepository.findById(dto.getIdResponsable())
-                    .orElseThrow(() -> new ResourceNotFoundException("Responsable", dto.getIdResponsable()));
-            usuario.setResponsable(responsable);
-        }
 
         usuario = usuarioRepository.save(usuario);
         return toDTO(usuario);
@@ -96,6 +96,26 @@ public class UsuarioService {
         UsuarioSistemaEntity usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
 
+        if (dto.getDni() != null && !dto.getDni().isBlank()) {
+            String cleanDni = dto.getDni().trim();
+            if (!cleanDni.matches("\\d{8}")) {
+                throw new IllegalArgumentException("El DNI debe tener exactamente 8 dígitos numéricos");
+            }
+            usuarioRepository.findByDni(cleanDni).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new IllegalArgumentException("El DNI ya está registrado por otro usuario");
+                }
+            });
+        }
+
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            usuarioRepository.findByEmail(dto.getEmail()).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new IllegalArgumentException("El correo electrónico ya está registrado por otro usuario");
+                }
+            });
+        }
+
         RolEntity rol = rolRepository.findById(dto.getIdRol())
                 .orElseThrow(() -> new ResourceNotFoundException("Rol", dto.getIdRol()));
 
@@ -103,26 +123,12 @@ public class UsuarioService {
         usuario.setNombres(dto.getNombres());
         usuario.setApellidos(dto.getApellidos());
         usuario.setRol(rol);
+        usuario.setDni(dto.getDni());
+        usuario.setCargo(dto.getCargo());
         usuario.setEstado(dto.getEstado());
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
-        }
-
-        if (dto.getIdDocente() != null) {
-            DocenteEntity docente = docenteRepository.findById(dto.getIdDocente())
-                    .orElseThrow(() -> new ResourceNotFoundException("Docente", dto.getIdDocente()));
-            usuario.setDocente(docente);
-        } else {
-            usuario.setDocente(null);
-        }
-
-        if (dto.getIdResponsable() != null) {
-            ResponsableVisitaEntity responsable = responsableRepository.findById(dto.getIdResponsable())
-                    .orElseThrow(() -> new ResourceNotFoundException("Responsable", dto.getIdResponsable()));
-            usuario.setResponsable(responsable);
-        } else {
-            usuario.setResponsable(null);
         }
 
         usuario = usuarioRepository.save(usuario);
@@ -145,17 +151,9 @@ public class UsuarioService {
         dto.setApellidos(entity.getApellidos());
         dto.setIdRol(entity.getRol().getId());
         dto.setRol(entity.getRol().getNombreRol().name());
+        dto.setDni(entity.getDni());
+        dto.setCargo(entity.getCargo());
         dto.setEstado(entity.getEstado());
-
-        if (entity.getDocente() != null) {
-            dto.setIdDocente(entity.getDocente().getId());
-            dto.setNombreDocente(entity.getDocente().getNombres() + " " + entity.getDocente().getApellidos());
-        }
-
-        if (entity.getResponsable() != null) {
-            dto.setIdResponsable(entity.getResponsable().getId());
-            dto.setNombreResponsable(entity.getResponsable().getNombres() + " " + entity.getResponsable().getApellidos());
-        }
 
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;

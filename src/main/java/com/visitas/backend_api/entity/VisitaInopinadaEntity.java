@@ -54,7 +54,7 @@ public class VisitaInopinadaEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_docente")
     @NotFound(action = NotFoundAction.IGNORE)
-    private DocenteEntity docente;
+    private UsuarioSistemaEntity docente;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_asignatura")
@@ -64,7 +64,7 @@ public class VisitaInopinadaEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_responsable")
     @NotFound(action = NotFoundAction.IGNORE)
-    private ResponsableVisitaEntity responsable;
+    private UsuarioSistemaEntity responsable;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario_auditor")

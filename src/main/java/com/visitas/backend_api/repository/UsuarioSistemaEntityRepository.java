@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface UsuarioSistemaEntityRepository extends JpaRepository<UsuarioSistemaEntity, Integer> {
     Optional<UsuarioSistemaEntity> findByEmail(String email);
+    Optional<UsuarioSistemaEntity> findByDni(String dni);
     List<UsuarioSistemaEntity> findByEstadoTrue();
 }

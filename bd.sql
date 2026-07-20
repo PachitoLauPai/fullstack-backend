@@ -31,15 +31,6 @@ CREATE TABLE Sede (
     FOREIGN KEY (id_universidad) REFERENCES Universidad(id_universidad) ON DELETE SET NULL
 );
 
-CREATE TABLE Docente (
-    id_docente INT AUTO_INCREMENT PRIMARY KEY,
-    nombres VARCHAR(255) NOT NULL,
-    apellidos VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    estado_activo BOOLEAN DEFAULT TRUE,
-    INDEX idx_docente_nombre (apellidos, nombres)
-);
-
 CREATE TABLE Asignatura (
     id_asignatura INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -47,14 +38,6 @@ CREATE TABLE Asignatura (
     ciclo_academico VARCHAR(50),
     turno VARCHAR(50),
     tipo_horario VARCHAR(50)
-);
-
-CREATE TABLE ResponsableVisita (
-    id_responsable INT AUTO_INCREMENT PRIMARY KEY,
-    nombres VARCHAR(255) NOT NULL,
-    apellidos VARCHAR(255) NOT NULL,
-    cargo VARCHAR(255),
-    email VARCHAR(255) UNIQUE
 );
 
 -- ============================================================================
@@ -68,14 +51,13 @@ CREATE TABLE UsuarioSistema (
     nombres VARCHAR(255) NOT NULL,
     apellidos VARCHAR(255) NOT NULL,
     id_rol INT NOT NULL,
-    id_docente INT NULL,
-    id_responsable INT NULL,
+    dni VARCHAR(20) UNIQUE NULL,
+    cargo VARCHAR(255) NULL,
     estado BOOLEAN DEFAULT TRUE,
     firma_hash LONGTEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol) ON DELETE RESTRICT,
-    FOREIGN KEY (id_docente) REFERENCES Docente(id_docente) ON DELETE SET NULL,
-    FOREIGN KEY (id_responsable) REFERENCES ResponsableVisita(id_responsable) ON DELETE SET NULL
+    INDEX idx_usuariosistema_nombre (apellidos, nombres)
 );
 
 -- ============================================================================
@@ -109,9 +91,9 @@ CREATE TABLE VisitaInopinada (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (id_sede) REFERENCES Sede(id_sede) ON DELETE SET NULL,
-    FOREIGN KEY (id_docente) REFERENCES Docente(id_docente) ON DELETE RESTRICT,
+    FOREIGN KEY (id_docente) REFERENCES UsuarioSistema(id_usuario) ON DELETE RESTRICT,
     FOREIGN KEY (id_asignatura) REFERENCES Asignatura(id_asignatura) ON DELETE RESTRICT,
-    FOREIGN KEY (id_responsable) REFERENCES ResponsableVisita(id_responsable) ON DELETE SET NULL,
+    FOREIGN KEY (id_responsable) REFERENCES UsuarioSistema(id_usuario) ON DELETE SET NULL,
     FOREIGN KEY (id_usuario_auditor) REFERENCES UsuarioSistema(id_usuario) ON DELETE SET NULL
 );
 
@@ -239,24 +221,18 @@ INSERT INTO Asignatura (nombre, campo_formativo, ciclo_academico, turno, tipo_ho
 -- 4. INSERCIÓN DE ENTIDADES ACADÉMICAS Y USUARIOS
 -- ============================================================================
 
-INSERT INTO Docente (nombres, apellidos, email, estado_activo) VALUES
-('MIGUEL ANGEL', 'HUERTA ROJAS', 'm.huerta@universidad.edu.pe', TRUE);
-
-INSERT INTO ResponsableVisita (nombres, apellidos, cargo, email) VALUES
-('VICTOR', 'GUADALUPE MORI', 'VICERRECTOR ACADÉMICO', 'v.guadalupe@universidad.edu.pe');
-
 -- Usuarios (Contraseña prueba: 123456 | Hash: $2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS)
-INSERT INTO UsuarioSistema (email, password_hash, nombres, apellidos, id_rol, id_docente, id_responsable, estado, firma_hash) VALUES
-('admin@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'ADMINISTRADOR', 'SISTEMAS', 1, NULL, NULL, TRUE, NULL),
-('v.guadalupe@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'VICTOR', 'GUADALUPE MORI', 2, NULL, 1, TRUE, NULL),
-('m.huerta@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'MIGUEL ANGEL', 'HUERTA ROJAS', 3, 1, NULL, TRUE, NULL);
+INSERT INTO UsuarioSistema (email, password_hash, nombres, apellidos, id_rol, dni, cargo, estado, firma_hash) VALUES
+('admin@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'ADMINISTRADOR', 'SISTEMAS', 1, '00000001', NULL, TRUE, NULL),
+('v.guadalupe@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'VICTOR', 'GUADALUPE MORI', 2, '00000002', 'VICERRECTOR ACADÉMICO', TRUE, NULL),
+('m.huerta@universidad.edu.pe', '$2a$10$JnWtYwpitWzonOVCuqGWvuzTGCJVJFHyNXks5d.BkQTaJxmBU5cMS', 'MIGUEL ANGEL', 'HUERTA ROJAS', 3, '00000003', NULL, TRUE, NULL);
 
 
 -- datos nuevos para "Visitas inopinadas"
 
 -- Visita 1 (Abril - Semana 2)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-04-15', '09:00:00', '09:18:00', 2, 'Aula 302 - Pabellón A', 'TEORICA', 2, 1, 1, 1, 2, 'COMPLETADA', '2026-04-15 09:20:00');
+VALUES ('2026-04-15', '09:00:00', '09:18:00', 2, 'Aula 302 - Pabellón A', 'TEORICA', 2, 3, 1, 2, 2, 'COMPLETADA', '2026-04-15 09:20:00');
 SET @visita_id_1 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)
@@ -277,7 +253,7 @@ VALUES (@visita_id_1, 'NO_APLICA', 'NO_APLICA', 'NO_APLICA', 'Clase puramente te
 
 -- Visita 2 (Abril - Semana 4)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-04-29', '15:30:00', '15:48:00', 4, 'Laboratorio de Computación 2', 'PRACTICA', 1, 1, 2, 1, 2, 'COMPLETADA', '2026-04-29 15:50:00');
+VALUES ('2026-04-29', '15:30:00', '15:48:00', 4, 'Laboratorio de Computación 2', 'PRACTICA', 1, 3, 2, 2, 2, 'COMPLETADA', '2026-04-29 15:50:00');
 SET @visita_id_2 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)
@@ -298,7 +274,7 @@ VALUES (@visita_id_2, 'CUMPLE', 'CUMPLE', 'CUMPLE', 'Se utilizó la rúbrica ofi
 
 -- Visita 3 (Mayo - Semana 6)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-05-13', '19:15:00', '19:32:00', 6, 'Aula 104', 'TEORICA', 3, 1, 3, 1, 2, 'COMPLETADA', '2026-05-13 19:35:00');
+VALUES ('2026-05-13', '19:15:00', '19:32:00', 6, 'Aula 104', 'TEORICA', 3, 3, 3, 2, 2, 'COMPLETADA', '2026-05-13 19:35:00');
 SET @visita_id_3 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)
@@ -319,7 +295,7 @@ VALUES (@visita_id_3, 'NO_APLICA', 'NO_APLICA', 'NO_APLICA', 'Clase teórica.');
 
 -- Visita 4 (Mayo - Semana 8)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-05-27', '08:45:00', '09:03:00', 8, 'Laboratorio de Computación 3', 'PRACTICA', 2, 1, 4, 1, 2, 'COMPLETADA', '2026-05-27 09:05:00');
+VALUES ('2026-05-27', '08:45:00', '09:03:00', 8, 'Laboratorio de Computación 3', 'PRACTICA', 2, 3, 4, 2, 2, 'COMPLETADA', '2026-05-27 09:05:00');
 SET @visita_id_4 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)
@@ -340,7 +316,7 @@ VALUES (@visita_id_4, 'CUMPLE', 'CUMPLE', 'CUMPLE', 'Guía de práctica número 
 
 -- Visita 5 (Junio - Semana 10)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-06-10', '10:00:00', '10:18:00', 10, 'Aula 201 - Pabellón B', 'TEORICA', 1, 1, 1, 1, 2, 'COMPLETADA', '2026-06-10 10:20:00');
+VALUES ('2026-06-10', '10:00:00', '10:18:00', 10, 'Aula 201 - Pabellón B', 'TEORICA', 1, 3, 1, 2, 2, 'COMPLETADA', '2026-06-10 10:20:00');
 SET @visita_id_5 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)
@@ -361,7 +337,7 @@ VALUES (@visita_id_5, 'NO_APLICA', 'NO_APLICA', 'NO_APLICA', 'Clase teórica.');
 
 -- Visita 6 (Junio - Semana 12)
 INSERT INTO VisitaInopinada (fecha_visita, hora_inicio, hora_termino, semana_numero, lugar_visita, tipo_clase, id_sede, id_docente, id_asignatura, id_responsable, id_usuario_auditor, estado_visita, fecha_registro)
-VALUES ('2026-06-17', '16:00:00', '16:19:00', 12, 'Laboratorio de Cómputo 1', 'PRACTICA', 3, 1, 2, 1, 2, 'COMPLETADA', '2026-06-17 16:22:00');
+VALUES ('2026-06-17', '16:00:00', '16:19:00', 12, 'Laboratorio de Cómputo 1', 'PRACTICA', 3, 3, 2, 2, 2, 'COMPLETADA', '2026-06-17 16:22:00');
 SET @visita_id_6 = LAST_INSERT_ID();
 
 INSERT INTO EvaluacionControlDocente (id_visita, docente_presente, horario_cumplido, interaccion_adecuada, actividad_desarrollada, observaciones)

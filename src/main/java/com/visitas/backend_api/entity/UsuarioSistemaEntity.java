@@ -38,15 +38,11 @@ public class UsuarioSistemaEntity {
     @NotFound(action = NotFoundAction.IGNORE)
     private RolEntity rol;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_docente")
-    @NotFound(action = NotFoundAction.IGNORE)
-    private DocenteEntity docente;
+    @Column(name = "dni", unique = true)
+    private String dni;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_responsable")
-    @NotFound(action = NotFoundAction.IGNORE)
-    private ResponsableVisitaEntity responsable;
+    @Column(name = "cargo")
+    private String cargo;
 
     @Column(name = "estado")
     private Boolean estado = true;

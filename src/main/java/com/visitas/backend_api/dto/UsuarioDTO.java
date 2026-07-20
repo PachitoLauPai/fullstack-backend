@@ -33,15 +33,11 @@ public class UsuarioDTO {
 
     private String rol;
 
-    private Integer idDocente;
+    private String dni;
 
-    private Integer idResponsable;
+    private String cargo;
 
     private Boolean estado;
 
     private LocalDateTime createdAt;
-
-    private String nombreDocente;
-
-    private String nombreResponsable;
 }

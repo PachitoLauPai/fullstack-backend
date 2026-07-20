@@ -26,8 +26,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         System.out.println("USUARIO ENCONTRADO: " + usuario.getEmail() + " - ID: " + usuario.getId());
         Rol rol = usuario.getRol().getNombreRol();
-        Integer idDocente = usuario.getDocente() != null ? usuario.getDocente().getId() : null;
-        Integer idResponsable = usuario.getResponsable() != null ? usuario.getResponsable().getId() : null;
+        Integer idDocente = rol == Rol.DOCENTE ? usuario.getId() : null;
+        Integer idResponsable = rol == Rol.AUDITOR ? usuario.getId() : null;
 
         return new CustomUserDetails(
                 usuario.getId(),
