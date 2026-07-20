@@ -10,7 +10,7 @@ import org.hibernate.annotations.NotFoundAction;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "usuariosistema")
+@Table(name = "UsuarioSistema")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
